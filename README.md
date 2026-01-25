@@ -103,12 +103,14 @@ The CLI looks for configuration in this order:
 ## Development
 
 ```bash
-make build      # Build binary
-make install    # Install to GOPATH/bin
+make build      # Build binary to bin/clickup
+make install    # Install to $GOPATH/bin
+make uninstall  # Remove from $GOPATH/bin
 make test       # Run tests
 make fmt        # Format code
 make vet        # Run go vet
 make check      # Run fmt, vet, and test
+make help       # Show all targets
 ```
 
 ## License

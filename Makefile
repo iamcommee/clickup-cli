@@ -11,7 +11,7 @@ LDFLAGS = -ldflags "\
 	-X clickup-cli/internal/commands.Commit=$(COMMIT) \
 	-X clickup-cli/internal/commands.BuildDate=$(BUILD_DATE)"
 
-.PHONY: all build install clean test fmt vet
+.PHONY: all build install clean test fmt vet check build-all run help
 
 all: build
 
@@ -64,15 +64,23 @@ build-windows:
 run:
 	go run ./cmd/clickup $(ARGS)
 
+# Uninstall from $GOPATH/bin
+uninstall:
+	rm -f $(shell go env GOPATH)/bin/$(BINARY_NAME)
+
 # Show help
 help:
-	@echo "Available targets:"
-	@echo "  build       - Build the binary"
-	@echo "  install     - Install to GOPATH/bin"
-	@echo "  clean       - Remove build artifacts"
-	@echo "  test        - Run tests"
-	@echo "  fmt         - Format code"
-	@echo "  vet         - Run go vet"
-	@echo "  check       - Run fmt, vet, and test"
-	@echo "  build-all   - Build for all platforms"
-	@echo "  run         - Run with ARGS"
+	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Targets:"
+	@echo "  build      Build binary to bin/clickup"
+	@echo "  install    Install to \$$GOPATH/bin"
+	@echo "  uninstall  Remove from \$$GOPATH/bin"
+	@echo "  clean      Remove build artifacts"
+	@echo "  test       Run tests"
+	@echo "  fmt        Format code"
+	@echo "  vet        Run go vet"
+	@echo "  check      Run fmt, vet, and test"
+	@echo "  build-all  Build for all platforms"
+	@echo "  run        Run with ARGS (e.g., make run ARGS='tasks')"
+	@echo "  help       Show this help"
