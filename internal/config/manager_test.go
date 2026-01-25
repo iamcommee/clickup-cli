@@ -8,9 +8,11 @@ import (
 )
 
 func TestManager_SaveEncryptsToken(t *testing.T) {
-	// Create temp directory
+	// Create temp directory with config structure
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, ".clickup.json")
+	configDir := filepath.Join(tmpDir, ".config", "clickup")
+	os.MkdirAll(configDir, 0700)
+	configPath := filepath.Join(configDir, "config.json")
 
 	mgr := NewManager(configPath)
 	cfg := &Config{
@@ -48,9 +50,11 @@ func TestManager_SaveEncryptsToken(t *testing.T) {
 }
 
 func TestManager_LoadDecryptsToken(t *testing.T) {
-	// Create temp directory
+	// Create temp directory with config structure
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, ".clickup.json")
+	configDir := filepath.Join(tmpDir, ".config", "clickup")
+	os.MkdirAll(configDir, 0700)
+	configPath := filepath.Join(configDir, "config.json")
 
 	// Save config
 	mgr := NewManager(configPath)
@@ -78,11 +82,13 @@ func TestManager_LoadDecryptsToken(t *testing.T) {
 }
 
 func TestManager_LoadMigratesPlainTextToken(t *testing.T) {
-	// Create temp directory
+	// Create temp directory with config structure
 	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, ".clickup.json")
+	configDir := filepath.Join(tmpDir, ".config", "clickup")
+	os.MkdirAll(configDir, 0700)
+	configPath := filepath.Join(configDir, "config.json")
 
-	// Write config with plain text token (simulating old config)
+	// Write config with plain text token (simulating unencrypted config)
 	plainCfg := map[string]string{
 		"api_token":    "pk_plain_text_token",
 		"workspace_id": "ws123",
@@ -91,7 +97,7 @@ func TestManager_LoadMigratesPlainTextToken(t *testing.T) {
 	data, _ := json.MarshalIndent(plainCfg, "", "  ")
 	os.WriteFile(configPath, data, 0600)
 
-	// Load config - should work and migrate
+	// Load config - should work and migrate to encrypted
 	mgr := NewManager(configPath)
 	cfg, err := mgr.Load()
 	if err != nil {
