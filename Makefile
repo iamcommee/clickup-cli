@@ -11,7 +11,7 @@ LDFLAGS = -ldflags "\
 	-X clickup-cli/internal/commands.Commit=$(COMMIT) \
 	-X clickup-cli/internal/commands.BuildDate=$(BUILD_DATE)"
 
-.PHONY: all build install clean test fmt vet check build-all run help
+.PHONY: all build install install-skill uninstall clean test fmt vet check build-all run help
 
 all: build
 
@@ -20,9 +20,21 @@ build:
 	@mkdir -p $(BUILD_DIR)
 	go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/clickup
 
-# Install to $GOPATH/bin
-install:
-	go install $(LDFLAGS) ./cmd/clickup
+# Install binary only
+install: build
+	@./scripts/install.sh
+
+# Install Claude Code skill only
+install-skill:
+	@./scripts/install-skill.sh
+
+# Install binary + Claude Code skill
+install-all: build
+	@./scripts/install.sh --with-skill
+
+# Uninstall everything (binary, skill, config)
+uninstall:
+	@./scripts/uninstall.sh
 
 # Clean build artifacts
 clean:
@@ -64,23 +76,21 @@ build-windows:
 run:
 	go run ./cmd/clickup $(ARGS)
 
-# Uninstall from $GOPATH/bin
-uninstall:
-	rm -f $(shell go env GOPATH)/bin/$(BINARY_NAME)
-
 # Show help
 help:
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Targets:"
-	@echo "  build      Build binary to bin/clickup"
-	@echo "  install    Install to \$$GOPATH/bin"
-	@echo "  uninstall  Remove from \$$GOPATH/bin"
-	@echo "  clean      Remove build artifacts"
-	@echo "  test       Run tests"
-	@echo "  fmt        Format code"
-	@echo "  vet        Run go vet"
-	@echo "  check      Run fmt, vet, and test"
-	@echo "  build-all  Build for all platforms"
-	@echo "  run        Run with ARGS (e.g., make run ARGS='tasks')"
-	@echo "  help       Show this help"
+	@echo "  build         Build binary to bin/clickup"
+	@echo "  install       Install binary to /usr/local/bin"
+	@echo "  install-skill Install Claude Code skill only"
+	@echo "  install-all   Install binary + Claude Code skill"
+	@echo "  uninstall     Remove binary, skill, and config"
+	@echo "  clean         Remove build artifacts"
+	@echo "  test          Run tests"
+	@echo "  fmt           Format code"
+	@echo "  vet           Run go vet"
+	@echo "  check         Run fmt, vet, and test"
+	@echo "  build-all     Build for all platforms"
+	@echo "  run           Run with ARGS (e.g., make run ARGS='tasks')"
+	@echo "  help          Show this help"

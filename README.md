@@ -5,19 +5,33 @@ A command-line interface for ClickUp. List your assigned tasks and view task det
 ## Installation
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/iamcommee/clickup-cli.git
 cd clickup-cli
-make build
-
-# Or install to $GOPATH/bin
 make install
+```
+
+### With Claude Code Integration
+
+```bash
+make install-all    # Install binary + Claude Code skill
+# or
+make install        # Install binary only
+make install-skill  # Add Claude Code skill later
+```
+
+The skill is symlinked, so `git pull` will automatically update it.
+
+### Uninstall
+
+```bash
+make uninstall      # Remove binary, skill, and config
 ```
 
 ## Quick Start
 
 1. Get your API token from https://app.clickup.com/settings/apps
 
-2. Install and configure:
+2. Configure the CLI:
    ```bash
    clickup install
    ```
@@ -26,6 +40,17 @@ make install
    ```bash
    clickup tasks
    ```
+
+## Claude Code Integration
+
+After installation, you can use `/clickup` in Claude Code:
+
+```
+/clickup tasks           # List your tasks
+/clickup                 # Claude will help with ClickUp tasks
+```
+
+Or just ask Claude naturally: "Show my ClickUp tasks"
 
 ## Commands
 
@@ -57,16 +82,16 @@ clickup tasks TASK-123 --open
 ### Configuration
 
 ```bash
-# Install (interactive setup)
+# Configure CLI (interactive)
 clickup install
 
-# Install with token (non-interactive)
+# Configure with token (non-interactive)
 clickup install --token pk_xxxxx
 
 # Show current config
 clickup config
 
-# Remove all configuration
+# Remove configuration
 clickup uninstall
 ```
 
@@ -87,7 +112,7 @@ clickup --help     # Help
 
 ## Configuration
 
-Config file location: `~/.config/clickup/config.json`
+Config file: `~/.config/clickup/config.json`
 
 The CLI looks for configuration in this order:
 1. Command-line flags
@@ -97,20 +122,20 @@ The CLI looks for configuration in this order:
 ### Security
 
 - API tokens are encrypted using AES-GCM before storing
-- Config file permissions are set to 0600 (owner only)
-- Config directory permissions are set to 0700 (owner only)
+- Config file permissions: 0600 (owner only)
+- Config directory permissions: 0700 (owner only)
 
 ## Development
 
 ```bash
-make build      # Build binary to bin/clickup
-make install    # Install to $GOPATH/bin
-make uninstall  # Remove from $GOPATH/bin
-make test       # Run tests
-make fmt        # Format code
-make vet        # Run go vet
-make check      # Run fmt, vet, and test
-make help       # Show all targets
+make build         # Build binary to bin/clickup
+make install       # Install binary to /usr/local/bin
+make install-skill # Install Claude Code skill
+make install-all   # Install binary + skill
+make uninstall     # Remove binary, skill, and config
+make test          # Run tests
+make check         # Run fmt, vet, and test
+make help          # Show all targets
 ```
 
 ## License
