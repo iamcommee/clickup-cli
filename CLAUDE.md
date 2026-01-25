@@ -6,12 +6,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 make build          # Build binary to bin/clickup
-make install        # Install to $GOPATH/bin
+make build-all      # Build for all platforms (updates pre-built binaries)
+make install        # Install pre-built binary to /usr/local/bin
+make install-skill  # Install Claude Code skill only
+make install-all    # Install binary + Claude Code skill
+make uninstall      # Remove binary, skill, and config
 make test           # Run all tests
 make fmt            # Format code
 make vet            # Run go vet
 make check          # Run fmt, vet, and test
 make run ARGS="..." # Run without building (e.g., make run ARGS="tasks")
+```
+
+## Installation
+
+Pre-built binaries are included in `bin/` for all platforms. Users don't need Go installed.
+
+```bash
+git clone https://github.com/iamcommee/clickup-cli.git
+cd clickup-cli
+make install        # Installs pre-built binary
+clickup install     # Configure API token
 ```
 
 ## Architecture

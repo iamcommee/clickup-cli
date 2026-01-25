@@ -1,10 +1,5 @@
-# Binaries
-/bin/
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
+# Local build (not platform-specific)
+/bin/clickup
 
 # Test binary
 *.test
@@ -21,4 +16,3 @@ go.work
 # OS
 .DS_Store
 Thumbs.db
-.clickup.json

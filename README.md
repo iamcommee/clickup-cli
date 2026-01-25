@@ -10,12 +10,17 @@ cd clickup-cli
 make install
 ```
 
+Then configure your API token:
+```bash
+clickup install
+```
+Get your token from: https://app.clickup.com/settings/apps
+
 ### With Claude Code Integration
 
 ```bash
 make install-all    # Install binary + Claude Code skill
 # or
-make install        # Install binary only
 make install-skill  # Add Claude Code skill later
 ```
 
@@ -27,23 +32,9 @@ The skill is symlinked, so `git pull` will automatically update it.
 make uninstall      # Remove binary, skill, and config
 ```
 
-## Quick Start
-
-1. Get your API token from https://app.clickup.com/settings/apps
-
-2. Configure the CLI:
-   ```bash
-   clickup install
-   ```
-
-3. List your assigned tasks:
-   ```bash
-   clickup tasks
-   ```
-
 ## Claude Code Integration
 
-After installation, you can use `/clickup` in Claude Code:
+After installing the skill, you can use `/clickup` in Claude Code:
 
 ```
 /clickup tasks           # List your tasks
@@ -57,42 +48,22 @@ Or just ask Claude naturally: "Show my ClickUp tasks"
 ### Tasks
 
 ```bash
-# List all assigned tasks
-clickup tasks
-
-# Filter by status
-clickup tasks --status "in progress"
-
-# Include closed tasks
-clickup tasks --closed
-
-# Limit results
-clickup tasks --limit 10
-
-# Output as JSON
-clickup tasks --output json
-
-# Get task details
-clickup tasks TASK-123
-
-# Open task in browser
-clickup tasks TASK-123 --open
+clickup tasks                          # List all assigned tasks
+clickup tasks --status "in progress"   # Filter by status
+clickup tasks --closed                 # Include closed tasks
+clickup tasks --limit 10               # Limit results
+clickup tasks --output json            # Output as JSON
+clickup tasks TASK-123                 # Get task details
+clickup tasks TASK-123 --open          # Open in browser
 ```
 
 ### Configuration
 
 ```bash
-# Configure CLI (interactive)
-clickup install
-
-# Configure with token (non-interactive)
-clickup install --token pk_xxxxx
-
-# Show current config
-clickup config
-
-# Remove configuration
-clickup uninstall
+clickup install                        # Configure CLI (interactive)
+clickup install --token pk_xxxxx       # Configure with token
+clickup config                         # Show current config
+clickup uninstall                      # Remove configuration
 ```
 
 ### Other
@@ -128,8 +99,9 @@ The CLI looks for configuration in this order:
 ## Development
 
 ```bash
-make build         # Build binary to bin/clickup
-make install       # Install binary to /usr/local/bin
+make build         # Build binary for current platform
+make build-all     # Build for all platforms (updates pre-built binaries)
+make install       # Install pre-built binary
 make install-skill # Install Claude Code skill
 make install-all   # Install binary + skill
 make uninstall     # Remove binary, skill, and config

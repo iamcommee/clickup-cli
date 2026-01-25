@@ -42,21 +42,17 @@ case $OS in
 esac
 
 BINARY_NAME="clickup-${OS}-${ARCH}"
+BINARY_PATH="$REPO_DIR/bin/$BINARY_NAME"
 INSTALL_DIR="/usr/local/bin"
 
 echo "Detected: $OS/$ARCH"
 echo ""
 
-# Find binary
-if [ -f "$REPO_DIR/bin/$BINARY_NAME" ]; then
-    BINARY_PATH="$REPO_DIR/bin/$BINARY_NAME"
-elif [ -f "$REPO_DIR/bin/clickup" ]; then
-    BINARY_PATH="$REPO_DIR/bin/clickup"
-else
-    echo -e "${YELLOW}No binary found. Building...${NC}"
-    cd "$REPO_DIR"
-    make build
-    BINARY_PATH="$REPO_DIR/bin/clickup"
+# Check pre-built binary exists
+if [ ! -f "$BINARY_PATH" ]; then
+    echo -e "${RED}Error: Pre-built binary not found at $BINARY_PATH${NC}"
+    echo "Please ensure you have the complete repository."
+    exit 1
 fi
 
 # Install binary

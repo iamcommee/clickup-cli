@@ -20,8 +20,8 @@ build:
 	@mkdir -p $(BUILD_DIR)
 	go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/clickup
 
-# Install binary only
-install: build
+# Install pre-built binary
+install:
 	@./scripts/install.sh
 
 # Install Claude Code skill only
@@ -29,7 +29,7 @@ install-skill:
 	@./scripts/install-skill.sh
 
 # Install binary + Claude Code skill
-install-all: build
+install-all:
 	@./scripts/install.sh --with-skill
 
 # Uninstall everything (binary, skill, config)
