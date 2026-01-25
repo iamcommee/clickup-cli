@@ -9,6 +9,8 @@ argument-hint: "[tasks|config|install]"
 
 You have access to the `clickup` CLI tool for managing ClickUp tasks.
 
+**IMPORTANT**: You MUST display the result exactly as you receive it.
+
 ## Available Commands
 
 ### List Tasks
