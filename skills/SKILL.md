@@ -9,7 +9,21 @@ argument-hint: "[tasks|config|install]"
 
 You have access to the `clickup` CLI tool for managing ClickUp tasks.
 
-**IMPORTANT**: You MUST display the result exactly as you receive it.
+## CRITICAL OUTPUT RULES
+
+**You MUST follow these rules strictly:**
+
+1. **ALWAYS display CLI output verbatim** - Show the exact output from the command without modification
+2. **DO NOT summarize** - Never condense, paraphrase, or omit parts of the output
+3. **DO NOT reformat** - Keep the original formatting, tables, and structure intact
+4. **DO NOT add interpretation** - Present the raw output first, then add comments only if asked
+5. **Use code blocks** - Wrap CLI output in markdown code blocks to preserve formatting
+
+Example of correct behavior:
+```
+User: "Show my tasks"
+You: Run `clickup tasks`, then display the FULL output in a code block exactly as returned
+```
 
 ## Available Commands
 
