@@ -17,9 +17,9 @@ make install
 
 1. Get your API token from https://app.clickup.com/settings/apps
 
-2. Initialize configuration:
+2. Install and configure:
    ```bash
-   clickup config init
+   clickup install
    ```
 
 3. List your assigned tasks:
@@ -32,7 +32,7 @@ make install
 ### Tasks
 
 ```bash
-# List all assigned tasks (sorted by ID)
+# List all assigned tasks
 clickup tasks
 
 # Filter by status
@@ -48,26 +48,26 @@ clickup tasks --limit 10
 clickup tasks --output json
 
 # Get task details
-clickup tasks HGAI-1217
+clickup tasks TASK-123
 
 # Open task in browser
-clickup tasks HGAI-1217 --open
-
-# Get task as JSON
-clickup tasks HGAI-1217 --output json
+clickup tasks TASK-123 --open
 ```
 
 ### Configuration
 
 ```bash
-# Initialize (interactive)
-clickup config init
+# Install (interactive setup)
+clickup install
 
-# Initialize with token
-clickup config init --token pk_xxxxx
+# Install with token (non-interactive)
+clickup install --token pk_xxxxx
 
 # Show current config
-clickup config show
+clickup config
+
+# Remove all configuration
+clickup uninstall
 ```
 
 ### Other
@@ -87,31 +87,29 @@ clickup --help     # Help
 
 ## Configuration
 
-The CLI looks for configuration in this order:
+Config file location: `~/.config/clickup/config.json`
 
+The CLI looks for configuration in this order:
 1. Command-line flags
 2. Environment variables: `CLICKUP_API_TOKEN`, `CLICKUP_WORKSPACE_ID`, `CLICKUP_USER_ID`
-3. `.clickup.json` in current directory
-4. `~/.clickup.json` in home directory
+3. `~/.config/clickup/config.json`
+4. `~/.clickup.json` (legacy, auto-migrated)
 
-### Config File
+### Security
 
-```json
-{
-  "api_token": "pk_xxxxx",
-  "workspace_id": "12345678",
-  "user_id": "87654321"
-}
-```
+- API tokens are encrypted using AES-GCM before storing
+- Config file permissions are set to 0600 (owner only)
+- Config directory permissions are set to 0700 (owner only)
 
 ## Development
 
 ```bash
 make build      # Build binary
 make install    # Install to GOPATH/bin
+make test       # Run tests
 make fmt        # Format code
 make vet        # Run go vet
-make build-all  # Build for all platforms
+make check      # Run fmt, vet, and test
 ```
 
 ## License
