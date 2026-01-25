@@ -31,9 +31,15 @@ List your assigned tasks, view task details, and manage your workflow
 directly from the terminal.
 
 Get started:
-  clickup config init   Initialize configuration with your API token
+  clickup install       Set up with your API token
   clickup tasks         List your assigned tasks
-  clickup tasks <ID>    View task details`,
+  clickup tasks <ID>    View task details
+
+Management:
+  clickup config        Show current configuration
+  clickup uninstall     Remove all configuration
+
+Config: ~/.config/clickup/config.json (encrypted)`,
 	SilenceUsage:  true,
 	SilenceErrors: true,
 }
@@ -47,7 +53,7 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file path (default .clickup.json)")
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file path (default ~/.config/clickup/config.json)")
 	rootCmd.PersistentFlags().StringVarP(&workspaceID, "workspace", "w", "", "override workspace ID")
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug output")
 }

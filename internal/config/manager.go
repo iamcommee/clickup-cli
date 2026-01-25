@@ -7,14 +7,9 @@ import (
 	"path/filepath"
 )
 
-const (
-	// DefaultConfigFileName is the default config file name
-	DefaultConfigFileName = ".clickup.json"
-)
-
 var (
 	// ErrConfigNotFound is returned when no config file is found
-	ErrConfigNotFound = errors.New("config file not found. Run 'clickup config init' to create one")
+	ErrConfigNotFound = errors.New("config file not found. Run 'clickup install' to set up")
 	// ErrMissingAPIToken is returned when API token is missing
 	ErrMissingAPIToken = errors.New("API token is required")
 	// ErrMissingWorkspaceID is returned when workspace ID is missing
@@ -72,14 +67,35 @@ func (m *Manager) Load() (*Config, error) {
 	return cfg, nil
 }
 
-// Save saves config to file
+// Save saves config to file with encrypted API token
 func (m *Manager) Save(cfg *Config) error {
 	path := m.configPath
 	if path == "" {
-		path = DefaultConfigFileName
+		path = DefaultConfigPath()
 	}
 
-	data, err := json.MarshalIndent(cfg, "", "  ")
+	// Ensure config directory exists
+	dir := filepath.Dir(path)
+	if err := EnsureConfigDir(dir); err != nil {
+		return err
+	}
+
+	// Create a copy with encrypted token
+	saveCfg := &Config{
+		WorkspaceID: cfg.WorkspaceID,
+		UserID:      cfg.UserID,
+	}
+
+	// Encrypt the API token
+	if cfg.APIToken != "" {
+		encryptedToken, err := Encrypt(cfg.APIToken)
+		if err != nil {
+			return err
+		}
+		saveCfg.APIToken = encryptedToken
+	}
+
+	data, err := json.MarshalIndent(saveCfg, "", "  ")
 	if err != nil {
 		return err
 	}
@@ -97,21 +113,13 @@ func (m *Manager) resolveConfigPath() string {
 		return ""
 	}
 
-	// Current directory
-	if _, err := os.Stat(DefaultConfigFileName); err == nil {
-		return DefaultConfigFileName
-	}
-
-	// Home directory fallback
+	// Find config file in standard locations
 	home, err := os.UserHomeDir()
-	if err == nil {
-		homePath := filepath.Join(home, DefaultConfigFileName)
-		if _, err := os.Stat(homePath); err == nil {
-			return homePath
-		}
+	if err != nil {
+		return ""
 	}
 
-	return ""
+	return FindConfigFile(home)
 }
 
 // loadFromFile loads config from a specific file
@@ -126,7 +134,45 @@ func (m *Manager) loadFromFile(path string) (*Config, error) {
 		return nil, err
 	}
 
+	// Decrypt the API token if it's encrypted
+	if cfg.APIToken != "" {
+		if IsEncrypted(cfg.APIToken) {
+			decrypted, err := Decrypt(cfg.APIToken)
+			if err != nil {
+				return nil, err
+			}
+			cfg.APIToken = decrypted
+		} else {
+			// Plain text token found - migrate it to encrypted format
+			if err := m.migrateToEncrypted(path, &cfg); err != nil {
+				// Log warning but continue - migration failure shouldn't block usage
+				// The token still works, just not encrypted yet
+			}
+		}
+	}
+
 	return &cfg, nil
+}
+
+// migrateToEncrypted encrypts a plain text token and saves the config
+func (m *Manager) migrateToEncrypted(path string, cfg *Config) error {
+	encryptedToken, err := Encrypt(cfg.APIToken)
+	if err != nil {
+		return err
+	}
+
+	saveCfg := &Config{
+		APIToken:    encryptedToken,
+		WorkspaceID: cfg.WorkspaceID,
+		UserID:      cfg.UserID,
+	}
+
+	data, err := json.MarshalIndent(saveCfg, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, data, 0600)
 }
 
 // GetConfigPath returns the path where config will be saved
@@ -134,5 +180,5 @@ func (m *Manager) GetConfigPath() string {
 	if m.configPath != "" {
 		return m.configPath
 	}
-	return DefaultConfigFileName
+	return DefaultConfigPath()
 }

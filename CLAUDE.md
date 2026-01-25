@@ -28,7 +28,7 @@ This is a Go CLI application for ClickUp task management built with Cobra.
   - `client.go` - HTTP client with auth header injection
   - Domain-specific files (`tasks.go`, `user.go`) add methods to Client
 - `internal/config/` - Configuration management
-  - Loads from: CLI flags → env vars → `.clickup.json` (cwd) → `~/.clickup.json`
+  - Loads from: CLI flags → env vars → `~/.config/clickup/config.json` → `~/.clickup.json` (legacy)
 - `internal/output/` - Output formatting (table, JSON, detail)
   - Uses `Formatter` interface pattern
 - `pkg/models/` - Data structures for API responses
@@ -38,3 +38,11 @@ This is a Go CLI application for ClickUp task management built with Cobra.
 - Global state in `root.go`: `cfg *config.Config` and `apiClient *api.Client` are lazily initialized via `getConfig()` and `getAPIClient()`
 - Version info injected via ldflags at build time (see Makefile)
 - Config file uses 0600 permissions for security
+
+### Security
+
+- API tokens are encrypted using AES-GCM before storing in `.clickup.json`
+- Encryption key is derived from machine-specific data (hostname + username)
+- Encrypted tokens have `enc:` prefix for identification
+- Plain text tokens are automatically migrated to encrypted format on first load
+- Encryption implementation: `internal/config/crypto.go`
