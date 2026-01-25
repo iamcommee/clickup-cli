@@ -85,49 +85,18 @@ func TestEnsureConfigDir(t *testing.T) {
 	}
 }
 
-func TestFindConfigFile_NewLocation(t *testing.T) {
+func TestFindConfigFile(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	// Create new location config
-	newConfigDir := filepath.Join(tmpDir, ".config", "clickup")
-	os.MkdirAll(newConfigDir, 0700)
-	newConfigPath := filepath.Join(newConfigDir, "config.json")
-	os.WriteFile(newConfigPath, []byte(`{}`), 0600)
+	// Create config file
+	configDir := filepath.Join(tmpDir, ".config", "clickup")
+	os.MkdirAll(configDir, 0700)
+	configPath := filepath.Join(configDir, "config.json")
+	os.WriteFile(configPath, []byte(`{}`), 0600)
 
 	found := FindConfigFile(tmpDir)
-	if found != newConfigPath {
-		t.Errorf("expected '%s', got '%s'", newConfigPath, found)
-	}
-}
-
-func TestFindConfigFile_LegacyLocation(t *testing.T) {
-	tmpDir := t.TempDir()
-
-	// Create only legacy location config
-	legacyPath := filepath.Join(tmpDir, ".clickup.json")
-	os.WriteFile(legacyPath, []byte(`{}`), 0600)
-
-	found := FindConfigFile(tmpDir)
-	if found != legacyPath {
-		t.Errorf("expected legacy path '%s', got '%s'", legacyPath, found)
-	}
-}
-
-func TestFindConfigFile_PrefersNewOverLegacy(t *testing.T) {
-	tmpDir := t.TempDir()
-
-	// Create both locations
-	newConfigDir := filepath.Join(tmpDir, ".config", "clickup")
-	os.MkdirAll(newConfigDir, 0700)
-	newConfigPath := filepath.Join(newConfigDir, "config.json")
-	os.WriteFile(newConfigPath, []byte(`{"new": true}`), 0600)
-
-	legacyPath := filepath.Join(tmpDir, ".clickup.json")
-	os.WriteFile(legacyPath, []byte(`{"legacy": true}`), 0600)
-
-	found := FindConfigFile(tmpDir)
-	if found != newConfigPath {
-		t.Errorf("should prefer new location, expected '%s', got '%s'", newConfigPath, found)
+	if found != configPath {
+		t.Errorf("expected '%s', got '%s'", configPath, found)
 	}
 }
 

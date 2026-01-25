@@ -18,11 +18,10 @@ var (
 var uninstallCmd = &cobra.Command{
 	Use:   "uninstall",
 	Short: "Remove ClickUp CLI configuration",
-	Long: `Remove all ClickUp CLI configuration files.
+	Long: `Remove ClickUp CLI configuration.
 
 This will delete:
-  - ~/.config/clickup/config.json (current config)
-  - ~/.clickup.json (legacy config, if exists)
+  - ~/.config/clickup/config.json
 
 Your API token will be removed. You'll need to run 'clickup install'
 again to use the CLI.`,

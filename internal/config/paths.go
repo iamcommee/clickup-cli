@@ -10,8 +10,6 @@ const (
 	AppName = "clickup"
 	// ConfigFileName is the config file name
 	ConfigFileName = "config.json"
-	// LegacyConfigFileName is the old config file name for backwards compatibility
-	LegacyConfigFileName = ".clickup.json"
 )
 
 // DefaultConfigDir returns the default config directory path
@@ -42,27 +40,12 @@ func EnsureConfigDir(dir string) error {
 	return os.MkdirAll(dir, 0700)
 }
 
-// FindConfigFile searches for config file in order of preference:
-// 1. ~/.config/clickup/config.json (new XDG location)
-// 2. ~/.clickup.json (legacy location)
+// FindConfigFile searches for config file
 // Returns empty string if no config file found
 func FindConfigFile(homeDir string) string {
-	// Check new XDG location first
-	newPath := filepath.Join(homeDir, ".config", AppName, ConfigFileName)
-	if _, err := os.Stat(newPath); err == nil {
-		return newPath
+	configPath := filepath.Join(homeDir, ".config", AppName, ConfigFileName)
+	if _, err := os.Stat(configPath); err == nil {
+		return configPath
 	}
-
-	// Check legacy location
-	legacyPath := filepath.Join(homeDir, LegacyConfigFileName)
-	if _, err := os.Stat(legacyPath); err == nil {
-		return legacyPath
-	}
-
 	return ""
-}
-
-// IsLegacyPath checks if a path is the legacy config location
-func IsLegacyPath(path string) bool {
-	return filepath.Base(path) == LegacyConfigFileName
 }

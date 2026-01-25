@@ -93,7 +93,6 @@ The CLI looks for configuration in this order:
 1. Command-line flags
 2. Environment variables: `CLICKUP_API_TOKEN`, `CLICKUP_WORKSPACE_ID`, `CLICKUP_USER_ID`
 3. `~/.config/clickup/config.json`
-4. `~/.clickup.json` (legacy, auto-migrated)
 
 ### Security
 
