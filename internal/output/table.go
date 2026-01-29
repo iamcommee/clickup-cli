@@ -47,6 +47,11 @@ func (f *TableFormatter) FormatTask(w io.Writer, task interface{}) error {
 	return (&DetailFormatter{}).FormatTask(w, task)
 }
 
+// FormatComments formats a list of comments as a table
+func (f *TableFormatter) FormatComments(w io.Writer, comments interface{}) error {
+	return (&DetailFormatter{}).FormatComments(w, comments)
+}
+
 // DetailFormatter formats a single task with full details
 type DetailFormatter struct{}
 
@@ -114,6 +119,50 @@ func (f *DetailFormatter) FormatTask(w io.Writer, task interface{}) error {
 		fmt.Fprintln(w)
 		cyan.Fprintln(w, "Description:")
 		fmt.Fprintln(w, desc)
+	}
+
+	return nil
+}
+
+// FormatComments formats a list of comments
+func (f *DetailFormatter) FormatComments(w io.Writer, comments interface{}) error {
+	commentList, ok := comments.([]models.Comment)
+	if !ok {
+		return fmt.Errorf("invalid comment list type")
+	}
+
+	if len(commentList) == 0 {
+		fmt.Fprintln(w, "No comments.")
+		return nil
+	}
+
+	// Sort by date ascending (oldest first)
+	sort.Slice(commentList, func(i, j int) bool {
+		return commentList[i].DateCreated.Time().Before(commentList[j].DateCreated.Time())
+	})
+
+	bold := color.New(color.Bold)
+	cyan := color.New(color.FgCyan)
+	dim := color.New(color.Faint)
+
+	bold.Fprintln(w, "Comments:")
+	fmt.Fprintln(w, strings.Repeat("-", 60))
+
+	for i, c := range commentList {
+		// Author and date
+		cyan.Fprintf(w, "%s", c.User.Username)
+		dim.Fprintf(w, " - %s", c.DateCreated.Format("2006-01-02 15:04"))
+		if c.Resolved {
+			dim.Fprint(w, " [resolved]")
+		}
+		fmt.Fprintln(w)
+
+		// Content
+		fmt.Fprintln(w, c.CommentText)
+
+		if i < len(commentList)-1 {
+			dim.Fprintln(w, strings.Repeat("·", 40))
+		}
 	}
 
 	return nil

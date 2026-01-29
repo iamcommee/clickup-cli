@@ -19,6 +19,8 @@ type Formatter interface {
 	FormatTasks(w io.Writer, tasks interface{}) error
 	// FormatTask formats a single task
 	FormatTask(w io.Writer, task interface{}) error
+	// FormatComments formats a list of comments
+	FormatComments(w io.Writer, comments interface{}) error
 }
 
 // GetFormatter returns the appropriate formatter for the given format

@@ -18,6 +18,7 @@ var (
 	outputFormat  string
 	includeClosed bool
 	openInBrowser bool
+	showComments  bool
 )
 
 var tasksCmd = &cobra.Command{
@@ -31,7 +32,8 @@ Examples:
   clickup tasks --status "in progress"   Filter by status
   clickup tasks --closed                 Include closed tasks
   clickup tasks HGAI-1217                Get task details
-  clickup tasks HGAI-1217 --open         Open task in browser`,
+  clickup tasks HGAI-1217 --open         Open task in browser
+  clickup tasks HGAI-1217 --comments     Show task comments`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runTasks,
 }
@@ -44,6 +46,7 @@ func init() {
 	tasksCmd.Flags().StringVarP(&outputFormat, "output", "o", "", "output format (table, json)")
 	tasksCmd.Flags().BoolVar(&includeClosed, "closed", false, "include closed tasks")
 	tasksCmd.Flags().BoolVar(&openInBrowser, "open", false, "open task in browser (only with task_id)")
+	tasksCmd.Flags().BoolVar(&showComments, "comments", false, "show task comments (only with task_id)")
 }
 
 func runTasks(cmd *cobra.Command, args []string) error {
@@ -121,7 +124,25 @@ func getTask(taskID string) error {
 		format = output.FormatDetail
 	}
 
-	return output.GetFormatter(format).FormatTask(os.Stdout, task)
+	formatter := output.GetFormatter(format)
+
+	if err := formatter.FormatTask(os.Stdout, task); err != nil {
+		return err
+	}
+
+	if showComments {
+		comments, err := client.GetTaskComments(taskID, cfg.WorkspaceID)
+		if err != nil {
+			return fmt.Errorf("failed to get comments: %w", err)
+		}
+
+		fmt.Fprintln(os.Stdout)
+		if err := formatter.FormatComments(os.Stdout, comments); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func openURL(url string) error {
