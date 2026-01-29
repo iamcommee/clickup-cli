@@ -53,6 +53,9 @@ func runTasks(cmd *cobra.Command, args []string) error {
 	if len(args) == 1 {
 		return getTask(args[0])
 	}
+	if showComments {
+		return fmt.Errorf("--comments requires a task ID: clickup tasks <task_id> --comments")
+	}
 	return listTasks()
 }
 
