@@ -19,6 +19,11 @@ func (f *JSONFormatter) FormatTask(w io.Writer, task interface{}) error {
 	return f.writeJSON(w, task)
 }
 
+// FormatComments formats comments as JSON
+func (f *JSONFormatter) FormatComments(w io.Writer, comments interface{}) error {
+	return f.writeJSON(w, comments)
+}
+
 // writeJSON writes the data as formatted JSON
 func (f *JSONFormatter) writeJSON(w io.Writer, data interface{}) error {
 	output, err := json.MarshalIndent(data, "", "  ")

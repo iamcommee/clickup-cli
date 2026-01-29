@@ -1,6 +1,6 @@
 ---
 name: clickup
-description: Use this skill when the user wants to list ClickUp tasks, view task details, or manage ClickUp CLI configuration. Triggers on phrases like "show my tasks", "clickup tasks", "what are my assigned tasks", "task details".
+description: Use this skill when the user wants to list ClickUp tasks, view task details, view task comments, or manage ClickUp CLI configuration. Triggers on phrases like "show my tasks", "clickup tasks", "what are my assigned tasks", "task details", "show comments".
 user-invocable: true
 argument-hint: "[tasks|config|install]"
 ---
@@ -38,6 +38,7 @@ clickup tasks --output json            # Output as JSON
 ### View Task Details
 ```bash
 clickup tasks TASK-ID                  # View task details
+clickup tasks TASK-ID --comments       # View task with comments
 clickup tasks TASK-ID --open           # Open in browser
 clickup tasks TASK-ID --output json    # Output as JSON
 ```
