@@ -3,8 +3,11 @@ package output
 import (
 	"fmt"
 	"io"
+	"os"
 	"sort"
 	"strings"
+	"syscall"
+	"unsafe"
 
 	"github.com/fatih/color"
 	"github.com/olekukonko/tablewriter"
@@ -12,6 +15,73 @@ import (
 
 	"clickup-cli/pkg/models"
 )
+
+type winsize struct {
+	Row    uint16
+	Col    uint16
+	Xpixel uint16
+	Ypixel uint16
+}
+
+// getTerminalWidth returns the terminal width, or a default if detection fails
+func getTerminalWidth() int {
+	ws := &winsize{}
+	fd := os.Stdout.Fd()
+	_, _, err := syscall.Syscall(syscall.SYS_IOCTL, fd, syscall.TIOCGWINSZ, uintptr(unsafe.Pointer(ws)))
+	if err != 0 || ws.Col == 0 {
+		return 80
+	}
+	return int(ws.Col)
+}
+
+// wrapText wraps text to the specified width, preserving existing line breaks
+func wrapText(text string, width int) string {
+	if width <= 0 {
+		return text
+	}
+
+	var result strings.Builder
+	lines := strings.Split(text, "\n")
+
+	for i, line := range lines {
+		if i > 0 {
+			result.WriteString("\n")
+		}
+		result.WriteString(wrapLine(line, width))
+	}
+
+	return result.String()
+}
+
+// wrapLine wraps a single line of text to the specified width
+func wrapLine(line string, width int) string {
+	if len(line) <= width {
+		return line
+	}
+
+	var result strings.Builder
+	words := strings.Fields(line)
+	currentLen := 0
+
+	for _, word := range words {
+		wordLen := len(word)
+
+		if currentLen == 0 {
+			result.WriteString(word)
+			currentLen = wordLen
+		} else if currentLen+1+wordLen <= width {
+			result.WriteString(" ")
+			result.WriteString(word)
+			currentLen += 1 + wordLen
+		} else {
+			result.WriteString("\n")
+			result.WriteString(word)
+			currentLen = wordLen
+		}
+	}
+
+	return result.String()
+}
 
 // TableFormatter formats output as a table
 type TableFormatter struct{}
@@ -148,6 +218,9 @@ func (f *DetailFormatter) FormatComments(w io.Writer, comments interface{}) erro
 	bold.Fprintln(w, "Comments:")
 	fmt.Fprintln(w, strings.Repeat("-", 60))
 
+	// Wrap comments to slightly less than terminal width
+	wrapWidth := getTerminalWidth() - 4
+
 	for i, c := range commentList {
 		// Author and date
 		cyan.Fprintf(w, "%s", c.User.Username)
@@ -157,8 +230,8 @@ func (f *DetailFormatter) FormatComments(w io.Writer, comments interface{}) erro
 		}
 		fmt.Fprintln(w)
 
-		// Content
-		fmt.Fprintln(w, c.CommentText)
+		// Content with word wrapping
+		fmt.Fprintln(w, wrapText(c.CommentText, wrapWidth))
 
 		if i < len(commentList)-1 {
 			dim.Fprintln(w, strings.Repeat("·", 40))

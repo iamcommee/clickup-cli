@@ -55,6 +55,7 @@ clickup tasks --limit 10               # Limit results
 clickup tasks --output json            # Output as JSON
 clickup tasks TASK-123                 # Get task details
 clickup tasks TASK-123 --open          # Open in browser
+clickup tasks TASK-123 --comments      # Show task comments
 ```
 
 ### Configuration
