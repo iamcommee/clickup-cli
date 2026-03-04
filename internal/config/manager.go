@@ -137,11 +137,20 @@ func (m *Manager) loadFromFile(path string) (*Config, error) {
 	// Decrypt the API token if it's encrypted
 	if cfg.APIToken != "" {
 		if IsEncrypted(cfg.APIToken) {
+			// Try primary key first
 			decrypted, err := Decrypt(cfg.APIToken)
 			if err != nil {
-				return nil, err
+				// Primary key failed, try fallback keys (legacy hostname variants)
+				decrypted, err = DecryptWithFallback(cfg.APIToken)
+				if err != nil {
+					return nil, err
+				}
+				// Fallback succeeded - re-encrypt with the current stable key
+				cfg.APIToken = decrypted
+				_ = m.migrateToEncrypted(path, &cfg)
+			} else {
+				cfg.APIToken = decrypted
 			}
-			cfg.APIToken = decrypted
 		} else {
 			// Plain text token found - migrate it to encrypted format
 			if err := m.migrateToEncrypted(path, &cfg); err != nil {

@@ -3,11 +3,8 @@ package output
 import (
 	"fmt"
 	"io"
-	"os"
 	"sort"
 	"strings"
-	"syscall"
-	"unsafe"
 
 	"github.com/fatih/color"
 	"github.com/olekukonko/tablewriter"
@@ -15,24 +12,6 @@ import (
 
 	"clickup-cli/pkg/models"
 )
-
-type winsize struct {
-	Row    uint16
-	Col    uint16
-	Xpixel uint16
-	Ypixel uint16
-}
-
-// getTerminalWidth returns the terminal width, or a default if detection fails
-func getTerminalWidth() int {
-	ws := &winsize{}
-	fd := os.Stdout.Fd()
-	_, _, err := syscall.Syscall(syscall.SYS_IOCTL, fd, syscall.TIOCGWINSZ, uintptr(unsafe.Pointer(ws)))
-	if err != 0 || ws.Col == 0 {
-		return 80
-	}
-	return int(ws.Col)
-}
 
 // wrapText wraps text to the specified width, preserving existing line breaks
 func wrapText(text string, width int) string {
