@@ -123,6 +123,11 @@ func (f *DetailFormatter) FormatTask(w io.Writer, task interface{}) error {
 	bold.Fprintf(w, "%s: %s\n", t.GetDisplayID(), t.Name)
 	fmt.Fprintln(w, strings.Repeat("-", 60))
 
+	// Parent task info
+	if t.ParentTask != nil {
+		printField(w, cyan, "Parent", fmt.Sprintf("%s: %s", t.ParentTask.GetDisplayID(), t.ParentTask.Name))
+	}
+
 	// Basic info
 	printField(w, cyan, "Status", t.Status.Status)
 	printField(w, cyan, "Priority", getPriorityString(t.Priority))
@@ -168,6 +173,15 @@ func (f *DetailFormatter) FormatTask(w io.Writer, task interface{}) error {
 		fmt.Fprintln(w)
 		cyan.Fprintln(w, "Description:")
 		fmt.Fprintln(w, desc)
+	}
+
+	// Parent description
+	if t.ParentTask != nil {
+		if desc := t.ParentTask.GetDescription(); desc != "" {
+			fmt.Fprintln(w)
+			cyan.Fprintf(w, "Parent Description (%s):\n", t.ParentTask.GetDisplayID())
+			fmt.Fprintln(w, desc)
+		}
 	}
 
 	return nil
