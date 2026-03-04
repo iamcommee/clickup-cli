@@ -27,7 +27,9 @@ type Task struct {
 	Folder              FolderInfo `json:"folder"`
 	Space               SpaceInfo  `json:"space"`
 	URL                 string     `json:"url"`
+	Parent              *string    `json:"parent,omitempty"`
 	Subtasks            []Task     `json:"subtasks,omitempty"`
+	ParentTask          *Task      `json:"-"`
 }
 
 // GetDisplayID returns the custom ID if available, otherwise the regular ID

@@ -113,6 +113,16 @@ func getTask(taskID string) error {
 		return fmt.Errorf("failed to get task: %w", err)
 	}
 
+	// Fetch parent task info if this is a subtask
+	if task.Parent != nil {
+		parentTask, err := client.GetTask(*task.Parent, cfg.WorkspaceID)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: could not fetch parent task: %v\n", err)
+		} else {
+			task.ParentTask = parentTask
+		}
+	}
+
 	if openInBrowser {
 		if err := openURL(task.URL); err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: could not open browser: %v\n", err)
