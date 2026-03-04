@@ -17,25 +17,49 @@ const (
 	EncryptedPrefix = "enc:"
 )
 
-// getEncryptionKey derives a key from machine-specific data
-func getEncryptionKey() []byte {
-	// Use hostname and username to create a machine-specific key
-	hostname, _ := os.Hostname()
+// normalizeHostname strips the .local suffix that macOS appends inconsistently
+func normalizeHostname(hostname string) string {
+	return strings.TrimSuffix(hostname, ".local")
+}
+
+// getEncryptionKeyWithHostname derives a key using a specific hostname
+func getEncryptionKeyWithHostname(hostname string) []byte {
 	username := os.Getenv("USER")
 	if username == "" {
 		username = os.Getenv("USERNAME") // Windows
 	}
 
-	// Create a consistent key from machine info
 	keyMaterial := hostname + ":" + username + ":clickup-cli-secret"
 	hash := sha256.Sum256([]byte(keyMaterial))
 	return hash[:]
 }
 
-// Encrypt encrypts plaintext using AES-GCM
-func Encrypt(plaintext string) (string, error) {
-	key := getEncryptionKey()
+// getEncryptionKey derives a key from machine-specific data
+func getEncryptionKey() []byte {
+	hostname, _ := os.Hostname()
+	hostname = normalizeHostname(hostname)
+	return getEncryptionKeyWithHostname(hostname)
+}
 
+// fallbackHostnames returns hostnames to try when decryption with the primary key fails.
+// This handles tokens encrypted before hostname normalization was added.
+var fallbackHostnames = func() []string {
+	hostname, _ := os.Hostname()
+	normalized := normalizeHostname(hostname)
+
+	var fallbacks []string
+	// If hostname was normalized, try the original (with .local)
+	if normalized != hostname {
+		fallbacks = append(fallbacks, hostname)
+	} else {
+		// If hostname has no .local, try with .local appended
+		fallbacks = append(fallbacks, hostname+".local")
+	}
+	return fallbacks
+}
+
+// encryptWithKey encrypts plaintext using a specific key
+func encryptWithKey(plaintext string, key []byte) (string, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return "", err
@@ -57,12 +81,9 @@ func Encrypt(plaintext string) (string, error) {
 	return EncryptedPrefix + encoded, nil
 }
 
-// Decrypt decrypts ciphertext using AES-GCM
-func Decrypt(ciphertext string) (string, error) {
-	// Remove prefix if present
+// decryptWithKey decrypts ciphertext using a specific key
+func decryptWithKey(ciphertext string, key []byte) (string, error) {
 	ciphertext = strings.TrimPrefix(ciphertext, EncryptedPrefix)
-
-	key := getEncryptionKey()
 
 	data, err := base64.StdEncoding.DecodeString(ciphertext)
 	if err != nil {
@@ -91,6 +112,37 @@ func Decrypt(ciphertext string) (string, error) {
 	}
 
 	return string(plaintext), nil
+}
+
+// Encrypt encrypts plaintext using AES-GCM with the current machine key
+func Encrypt(plaintext string) (string, error) {
+	return encryptWithKey(plaintext, getEncryptionKey())
+}
+
+// Decrypt decrypts ciphertext using AES-GCM with the current machine key
+func Decrypt(ciphertext string) (string, error) {
+	return decryptWithKey(ciphertext, getEncryptionKey())
+}
+
+// DecryptWithFallback tries the current key first, then falls back to legacy
+// hostname variants (e.g., with/without .local suffix on macOS)
+func DecryptWithFallback(ciphertext string) (string, error) {
+	// Try current (normalized) key first
+	plaintext, err := Decrypt(ciphertext)
+	if err == nil {
+		return plaintext, nil
+	}
+
+	// Try fallback hostnames (handles tokens encrypted before normalization)
+	for _, hostname := range fallbackHostnames() {
+		key := getEncryptionKeyWithHostname(hostname)
+		plaintext, fallbackErr := decryptWithKey(ciphertext, key)
+		if fallbackErr == nil {
+			return plaintext, nil
+		}
+	}
+
+	return "", err
 }
 
 // IsEncrypted checks if a token is encrypted (has the enc: prefix)
