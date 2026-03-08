@@ -41,17 +41,26 @@ case $OS in
     *) echo -e "${RED}Unsupported OS: $OS${NC}"; exit 1 ;;
 esac
 
-BINARY_NAME="clickup-${OS}-${ARCH}"
-BINARY_PATH="$REPO_DIR/bin/$BINARY_NAME"
 INSTALL_DIR="/usr/local/bin"
+BINARY_PATH="$REPO_DIR/bin/clickup"
 
 echo "Detected: $OS/$ARCH"
 echo ""
 
-# Check pre-built binary exists
+# Always build from source to ensure latest version
+echo "Building from source..."
+if command -v go &> /dev/null; then
+    (cd "$REPO_DIR" && make build)
+else
+    # Fallback to pre-built binary if Go is not installed
+    BINARY_NAME="clickup-${OS}-${ARCH}"
+    BINARY_PATH="$REPO_DIR/bin/$BINARY_NAME"
+fi
+
+# Check binary exists
 if [ ! -f "$BINARY_PATH" ]; then
-    echo -e "${RED}Error: Pre-built binary not found at $BINARY_PATH${NC}"
-    echo "Please ensure you have the complete repository."
+    echo -e "${RED}Error: Binary not found at $BINARY_PATH${NC}"
+    echo "Please ensure Go is installed or pre-built binaries are available."
     exit 1
 fi
 

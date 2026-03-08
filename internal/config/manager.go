@@ -10,12 +10,6 @@ import (
 var (
 	// ErrConfigNotFound is returned when no config file is found
 	ErrConfigNotFound = errors.New("config file not found. Run 'clickup install' to set up")
-	// ErrMissingAPIToken is returned when API token is missing
-	ErrMissingAPIToken = errors.New("API token is required")
-	// ErrMissingWorkspaceID is returned when workspace ID is missing
-	ErrMissingWorkspaceID = errors.New("workspace ID is required")
-	// ErrMissingUserID is returned when user ID is missing
-	ErrMissingUserID = errors.New("user ID is required")
 )
 
 // Manager handles config loading and saving
@@ -137,25 +131,15 @@ func (m *Manager) loadFromFile(path string) (*Config, error) {
 	// Decrypt the API token if it's encrypted
 	if cfg.APIToken != "" {
 		if IsEncrypted(cfg.APIToken) {
-			// Try primary key first
 			decrypted, err := Decrypt(cfg.APIToken)
 			if err != nil {
-				// Primary key failed, try fallback keys (legacy hostname variants)
-				decrypted, err = DecryptWithFallback(cfg.APIToken)
-				if err != nil {
-					return nil, err
-				}
-				// Fallback succeeded - re-encrypt with the current stable key
-				cfg.APIToken = decrypted
-				_ = m.migrateToEncrypted(path, &cfg)
-			} else {
-				cfg.APIToken = decrypted
+				return nil, errors.New("failed to decrypt API token. Run 'clickup install' to reconfigure")
 			}
+			cfg.APIToken = decrypted
 		} else {
 			// Plain text token found - migrate it to encrypted format
 			if err := m.migrateToEncrypted(path, &cfg); err != nil {
 				// Log warning but continue - migration failure shouldn't block usage
-				// The token still works, just not encrypted yet
 			}
 		}
 	}

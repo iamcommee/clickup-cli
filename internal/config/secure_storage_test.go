@@ -1,69 +1,59 @@
 package config
 
 import (
+	"bytes"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
-func TestNormalizeHostname(t *testing.T) {
-	tests := []struct {
-		input    string
-		expected string
-	}{
-		{"commees-MacBook-Pro.local", "commees-MacBook-Pro"},
-		{"commees-MacBook-Pro", "commees-MacBook-Pro"},
-		{"my-host.local", "my-host"},
-		{"my-host.example.com", "my-host.example.com"},
-		{"localhost", "localhost"},
-		{"", ""},
+func TestGetOrCreateKeyFile(t *testing.T) {
+	dir := t.TempDir()
+
+	key, err := getOrCreateKeyFile(dir)
+	if err != nil {
+		t.Fatalf("getOrCreateKeyFile failed on first call: %v", err)
 	}
 
-	for _, tt := range tests {
-		result := normalizeHostname(tt.input)
-		if result != tt.expected {
-			t.Errorf("normalizeHostname(%q) = %q, want %q", tt.input, result, tt.expected)
-		}
+	if len(key) != 32 {
+		t.Errorf("expected 32-byte key, got %d bytes", len(key))
+	}
+
+	keyPath := filepath.Join(dir, ".key")
+	if _, statErr := os.Stat(keyPath); os.IsNotExist(statErr) {
+		t.Errorf(".key file was not created at %s", keyPath)
+	}
+
+	// Second call should return identical key
+	key2, err := getOrCreateKeyFile(dir)
+	if err != nil {
+		t.Fatalf("getOrCreateKeyFile failed on second call: %v", err)
+	}
+
+	if !bytes.Equal(key, key2) {
+		t.Error("expected the same key on subsequent calls, got a different key")
 	}
 }
 
-func TestDecryptWithFallback(t *testing.T) {
-	// Encrypt with current key (normalized hostname)
-	plaintext := "pk_test_token_12345"
-	encrypted, err := Encrypt(plaintext)
-	if err != nil {
-		t.Fatalf("Encrypt failed: %v", err)
+func TestGetOrCreateKeyFile_ExistingKey(t *testing.T) {
+	dir := t.TempDir()
+
+	knownKey := make([]byte, 32)
+	for i := range knownKey {
+		knownKey[i] = byte(i + 1)
+	}
+	keyPath := filepath.Join(dir, ".key")
+	if err := os.WriteFile(keyPath, knownKey, 0600); err != nil {
+		t.Fatalf("failed to write pre-existing .key file: %v", err)
 	}
 
-	// Should decrypt normally
-	decrypted, err := DecryptWithFallback(encrypted)
+	returned, err := getOrCreateKeyFile(dir)
 	if err != nil {
-		t.Fatalf("DecryptWithFallback failed: %v", err)
-	}
-	if decrypted != plaintext {
-		t.Errorf("expected %q, got %q", plaintext, decrypted)
-	}
-}
-
-func TestDecryptWithFallback_OldKey(t *testing.T) {
-	// Encrypt with a legacy key (simulating old hostname with .local)
-	plaintext := "pk_legacy_token_67890"
-	encrypted, err := encryptWithKey(plaintext, getEncryptionKeyWithHostname("test-host.local"))
-	if err != nil {
-		t.Fatalf("encryptWithKey failed: %v", err)
+		t.Fatalf("getOrCreateKeyFile failed: %v", err)
 	}
 
-	// Register the old hostname as a fallback
-	oldFallbackHostnames := fallbackHostnames
-	fallbackHostnames = func() []string {
-		return []string{"test-host.local"}
-	}
-	defer func() { fallbackHostnames = oldFallbackHostnames }()
-
-	decrypted, err := DecryptWithFallback(encrypted)
-	if err != nil {
-		t.Fatalf("DecryptWithFallback should succeed with fallback key: %v", err)
-	}
-	if decrypted != plaintext {
-		t.Errorf("expected %q, got %q", plaintext, decrypted)
+	if !bytes.Equal(returned, knownKey) {
+		t.Errorf("expected pre-existing key to be returned unchanged")
 	}
 }
 
@@ -75,7 +65,6 @@ func TestEncryptDecrypt(t *testing.T) {
 		t.Fatalf("Encrypt failed: %v", err)
 	}
 
-	// Encrypted should be different from plaintext
 	if encrypted == plaintext {
 		t.Error("encrypted text should not equal plaintext")
 	}
@@ -109,13 +98,11 @@ func TestEncryptDecrypt_EmptyString(t *testing.T) {
 }
 
 func TestDecrypt_InvalidData(t *testing.T) {
-	// Try to decrypt invalid base64
 	_, err := Decrypt("not-valid-base64!!!")
 	if err == nil {
 		t.Error("expected error for invalid base64")
 	}
 
-	// Try to decrypt valid base64 but too short for AES
 	_, err = Decrypt("c2hvcnQ=") // "short" in base64
 	if err == nil {
 		t.Error("expected error for data too short")
@@ -123,14 +110,47 @@ func TestDecrypt_InvalidData(t *testing.T) {
 }
 
 func TestIsEncrypted(t *testing.T) {
-	// Plain text token
 	if IsEncrypted("pk_12345678_abcdefghijklmnop") {
 		t.Error("plain text should not be detected as encrypted")
 	}
 
-	// Encrypted token
 	encrypted, _ := Encrypt("pk_12345678_abcdefghijklmnop")
 	if !IsEncrypted(encrypted) {
 		t.Error("encrypted text should be detected as encrypted")
+	}
+}
+
+func TestEncryptDecryptWithKeyFile(t *testing.T) {
+	dir := t.TempDir()
+
+	plaintext := "pk_keyfile_token_abc123"
+
+	key, err := getOrCreateKeyFile(dir)
+	if err != nil {
+		t.Fatalf("getOrCreateKeyFile failed: %v", err)
+	}
+
+	encrypted, err := encryptWithKey(plaintext, key)
+	if err != nil {
+		t.Fatalf("encryptWithKey failed: %v", err)
+	}
+
+	if !IsEncrypted(encrypted) {
+		t.Errorf("encrypted value should have the %q prefix", EncryptedPrefix)
+	}
+
+	// Re-fetch key to simulate a fresh process
+	key2, err := getOrCreateKeyFile(dir)
+	if err != nil {
+		t.Fatalf("getOrCreateKeyFile failed on second fetch: %v", err)
+	}
+
+	decrypted, err := decryptWithKey(encrypted, key2)
+	if err != nil {
+		t.Fatalf("decryptWithKey failed: %v", err)
+	}
+
+	if decrypted != plaintext {
+		t.Errorf("expected %q after decrypt, got %q", plaintext, decrypted)
 	}
 }

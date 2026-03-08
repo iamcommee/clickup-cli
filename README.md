@@ -99,10 +99,12 @@ The CLI looks for configuration in this order:
 
 ## Development
 
+Requires Go 1.21+.
+
 ```bash
 make build         # Build binary for current platform
 make build-all     # Build for all platforms (updates pre-built binaries)
-make install       # Install pre-built binary
+make install       # Build from source and install to /usr/local/bin
 make install-skill # Install Claude Code skill
 make install-all   # Install binary + skill
 make uninstall     # Remove binary, skill, and config

@@ -18,6 +18,14 @@ func Cleanup(homeDir string) ([]string, error) {
 		}
 		removed = append(removed, configPath)
 
+		// Remove key file if it exists
+		keyPath := filepath.Join(configDir, keyFileName)
+		if _, err := os.Stat(keyPath); err == nil {
+			if err := os.Remove(keyPath); err == nil {
+				removed = append(removed, keyPath)
+			}
+		}
+
 		// Try to remove the directory if empty
 		_ = os.Remove(configDir)
 	}

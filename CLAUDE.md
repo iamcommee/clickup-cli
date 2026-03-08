@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 make build          # Build binary to bin/clickup
 make build-all      # Build for all platforms (updates pre-built binaries)
-make install        # Install pre-built binary to /usr/local/bin
+make install        # Build from source and install to /usr/local/bin
 make install-skill  # Install Claude Code skill only
 make install-all    # Install binary + Claude Code skill
 make uninstall      # Remove binary, skill, and config
@@ -20,14 +20,14 @@ make run ARGS="..." # Run without building (e.g., make run ARGS="tasks")
 
 ## Installation
 
-Pre-built binaries are included in `bin/` for all platforms. Users don't need Go installed.
-
 ```bash
 git clone https://github.com/iamcommee/clickup-cli.git
 cd clickup-cli
-make install        # Installs pre-built binary
+make install        # Builds from source and installs to /usr/local/bin
 clickup install     # Configure API token
 ```
+
+Pre-built binaries in `bin/` are used as fallback when Go is not installed.
 
 ## Architecture
 
@@ -57,7 +57,7 @@ This is a Go CLI application for ClickUp task management built with Cobra.
 ### Security
 
 - API tokens are encrypted using AES-GCM before storing
-- Encryption key is derived from machine-specific data (hostname + username)
+- Encryption key is a random 32-byte key stored in `~/.config/clickup/.key`
 - Encrypted tokens have `enc:` prefix for identification
 - Config file: `~/.config/clickup/config.json`
 - Encryption implementation: `internal/config/crypto.go`
